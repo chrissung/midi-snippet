@@ -73,21 +73,7 @@ class CoreMidiPartHelper
 		# initialize event array
 		$this->events = array();
 		
-		if (0 && $this->initRestTicks) {
-			# turn off all channels
-			foreach(range(0,15) as $chan) {
-				$this->addEvent(0,176+$chan,123,0);
-				$this->addEvent(0,176+$chan,120,0);
-				$this->addEvent(0,176+$chan,7,0);
-			}
-			# for all channels in this track
-			for($ix=0; $ix<$this->track_total; $ix++) {
-				$this->track_ix = $ix;
-				$this->addEvent($this->initRestTicks,176+$this->channels[$this->track_ix][0],7,0);
-				$this->addEvent($this->initRestTicks,176+$this->channels[$this->track_ix][0],7,$this->mVol);
-			}
-		}
-		if (1 && $this->initRestTicks) {
+		if ($this->initRestTicks) {
 			# Add a brief rest and then all notes off and all sound off to relevant channels here
 			for($ix=0; $ix<$this->track_total; $ix++) {
 				$this->track_ix = $ix;
@@ -144,8 +130,7 @@ class CoreMidiPartHelper
 	 */
 	public function finish()
 	{
-		# TODO: are we missing some sustain at the end?
-		#  add any needed extra time to one single chan at end
+		# add any needed extra time to one single chan at end
 		$timeOffset = 0;
 		if ($this->countoff==0) $timeOffset += $this->leaveRoomTicks;
 		
@@ -154,16 +139,6 @@ class CoreMidiPartHelper
 		for($ix=0; $ix<$this->track_total; $ix++) {
 			$this->track_ix = $ix;
 			$this->addEvent($timeOffset,176+$this->channels[$this->track_ix][0],7,$this->mVol);
-			# print "$timeOffset,".(176+$this->channels[$this->track_ix][0]).",7,".$this->mVol."\n";
-		}
-		
-		# TODO: this addresses groove parts -- will this fail for sequences?
-		for($j=5; $j>=0; $j--) {
-			if ($this->oldPitches[$j]>=0) {
-				$this->addEvent(0,144+$this->channelMap[$j],$this->baseNote[$j]+$this->oldPitches[$j],0);
-				$this->oldPitches[$j] = -1;
-				# print "0,".(144+$this->channelMap[$j]).",".($this->baseNote[$j]+$this->oldPitches[$j]).",0\n";
-			}
 		}
 		
 		# Check if we need to fill out for lessons with grooves
@@ -232,8 +207,6 @@ class CoreMidiPartHelper
 	{
 		list($t1,$t2) = array(0,0);
 		if ($t0>0) list($t1,$t2) = $this->computeMidiTime($t0);
-		
-		# print "$t1,$t2,$evt1,$evt2,$evt3\n"; sleep(1);
 		
 		if ($t1>0) $this->events[$this->track_ix][] = $t1 ;	# Add first byte if offset is large enough
 		$this->events[$this->track_ix][] = $t2;
